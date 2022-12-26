@@ -11,18 +11,12 @@ __version__ = "0.0.1"
 
 init(autoreset=True)
 
-def whatweb(target:str):
-	try:
-		r = get(target)
-	except MissingSchema:
-		r = get(f"http://{target}")
-
-	status_code = r.status_code
+def get_status(status_code:int):
 	match status_code:
 		case 200:
 			statusCode = "200 OK"
 		case 301:
-			status_code = "301 Moved Permanently"
+			statusCode = "301 Moved Permanently"
 		case 400:
 			statusCode = "400 Bad Request"
 		case 401:
@@ -42,10 +36,26 @@ def whatweb(target:str):
 		case _:
 			statusCode = status_code
 
+	return statusCode
+
+def whatweb(target:str):
+	try:
+		r = get(target)
+	except MissingSchema:
+		r = get(f"http://{target}")
+
+	status_code = get_status(r.status_code)
+
 	soup = BeautifulSoup(r.text, 'html.parser')
 	title = soup.title.get_text()
 
+	generator_tags = soup.findAll('meta', attrs={'name': 'generator'})
+	generators = ""
+	for generator in generator_tags:
+		generators += f"{generator['content']}, "
+
 	Ip = socket.gethostbyname(target)
+
 	try:
 		xPoweredBy = r.headers["x-powered-by"]
 	except KeyError:
@@ -56,10 +66,10 @@ def whatweb(target:str):
 	except KeyError:
 		httpServer = ""
 
-	return f"{Fore.LIGHTBLUE_EX}{r.url}{Fore.RESET} [{statusCode}] HTTPServer[{Fore.LIGHTRED_EX}{httpServer}{Fore.RESET}] IP[{Ip}] Title[{Fore.LIGHTYELLOW_EX}{title}{Fore.RESET}] X-Powered-By[{xPoweredBy}]"
+	return f"{Fore.LIGHTBLUE_EX}{r.url}{Fore.RESET} [{status_code}] HTTPServer[{Fore.LIGHTRED_EX}{httpServer}{Fore.RESET}] IP[{Ip}] MetaGenerator[{generators}] Title[{Fore.LIGHTYELLOW_EX}{title}{Fore.RESET}] X-Powered-By[{xPoweredBy}]"
 
 example_uses = '''example:
-   whatweb example.com'''
+   whatweb -t example.com'''
 
 def main(argv = None):
 	parser = argparse.ArgumentParser(prog=package_name, description="Next generation web scanner", epilog=example_uses, formatter_class=argparse.RawDescriptionHelpFormatter)
