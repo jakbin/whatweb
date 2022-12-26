@@ -7,7 +7,7 @@ from colorama import Fore, init
 from requests.exceptions import MissingSchema
 
 package_name = "whatweb"
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 init(autoreset=True)
 
@@ -84,7 +84,7 @@ def main(argv = None):
 	args = parser.parse_args(argv)
 
 	if args.target:
-		return whatweb(args.target)
+		print(whatweb(args.target))
 	elif args.version:
 		return __version__
 	else:
