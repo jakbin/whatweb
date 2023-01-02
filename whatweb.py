@@ -7,7 +7,7 @@ from colorama import Fore, init
 from requests.exceptions import MissingSchema
 
 package_name = "whatweb"
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 init(autoreset=True)
 
@@ -54,19 +54,22 @@ def whatweb(target:str):
 	for generator in generator_tags:
 		generators += f"{generator['content']}, "
 
-	Ip = socket.gethostbyname(target)
+	try:
+		Ip = f'IP[{socket.gethostbyname(target)}]'
+	except socket.gaierror:
+		Ip = ''
 
 	try:
-		xPoweredBy = r.headers["x-powered-by"]
+		xPoweredBy = f'X-Powered-By[{r.headers["x-powered-by"]}]'
 	except KeyError:
 		xPoweredBy = ""
 
 	try:
-		httpServer = r.headers["Server"]
+		httpServer = f'HTTPServer[{Fore.LIGHTRED_EX}{r.headers["Server"]}{Fore.RESET}]'
 	except KeyError:
 		httpServer = ""
 
-	return f"{Fore.LIGHTBLUE_EX}{r.url}{Fore.RESET} [{status_code}] HTTPServer[{Fore.LIGHTRED_EX}{httpServer}{Fore.RESET}] IP[{Ip}] MetaGenerator[{generators}] Title[{Fore.LIGHTYELLOW_EX}{title}{Fore.RESET}] X-Powered-By[{xPoweredBy}]"
+	return f"{Fore.LIGHTBLUE_EX}{r.url}{Fore.RESET} [{status_code}] {httpServer} {Ip} MetaGenerator[{generators}] Title[{Fore.LIGHTYELLOW_EX}{title}{Fore.RESET}] {xPoweredBy}"
 
 example_uses = '''example:
    whatweb -t example.com'''
