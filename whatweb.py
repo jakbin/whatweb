@@ -1,13 +1,14 @@
 import socket
-import urllib3
+import urllib
 import argparse
-from requests import get
+import dns.resolver
+from requests import get, head
 from bs4 import BeautifulSoup
 from colorama import Fore, init
 from requests.exceptions import MissingSchema
 
 package_name = "whatweb"
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 init(autoreset=True)
 
@@ -57,7 +58,18 @@ def whatweb(target:str):
 	try:
 		Ip = f'IP[{socket.gethostbyname(target)}]'
 	except socket.gaierror:
-		Ip = ''
+		res = head(target, allow_redirects=True)
+		try:
+			Ip = r.headers['Host']
+		except KeyError:
+			parsed_url = urllib.parse.urlparse(target)
+			hostname = parsed_url.hostname
+			try:
+				answers = dns.resolver.query(hostname, 'A')
+				for rdata in answers:
+					Ip = rdata.address
+			except dns.resolver.NXDOMAIN:
+				Ip = ''
 
 	try:
 		xPoweredBy = f'X-Powered-By[{r.headers["x-powered-by"]}]'
