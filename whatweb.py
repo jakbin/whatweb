@@ -8,7 +8,7 @@ from colorama import Fore, init
 from requests.exceptions import MissingSchema
 
 package_name = "whatweb"
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 init(autoreset=True)
 
@@ -54,20 +54,24 @@ def whatweb(target:str):
 	generators = ""
 	for generator in generator_tags:
 		generators += f"{generator['content']}, "
+	if generators != "": 
+		final_generators = f"MetaGenerator[{generators}]"
+	else:
+		final_generators = ""
 
 	try:
 		Ip = f'IP[{socket.gethostbyname(target)}]'
 	except socket.gaierror:
 		res = head(target, allow_redirects=True)
 		try:
-			Ip = r.headers['Host']
+			Ip = f'IP[{r.headers["Host"]}]'
 		except KeyError:
 			parsed_url = urllib.parse.urlparse(target)
 			hostname = parsed_url.hostname
 			try:
 				answers = dns.resolver.query(hostname, 'A')
 				for rdata in answers:
-					Ip = rdata.address
+					Ip = f'IP[{rdata.address}]'
 			except dns.resolver.NXDOMAIN:
 				Ip = ''
 
@@ -81,7 +85,7 @@ def whatweb(target:str):
 	except KeyError:
 		httpServer = ""
 
-	return f"{Fore.LIGHTBLUE_EX}{r.url}{Fore.RESET} [{status_code}] {httpServer} {Ip} MetaGenerator[{generators}] Title[{Fore.LIGHTYELLOW_EX}{title}{Fore.RESET}] {xPoweredBy}"
+	return f"{Fore.LIGHTBLUE_EX}{r.url}{Fore.RESET} [{status_code}] {httpServer} {Ip} {final_generators} Title[{Fore.LIGHTYELLOW_EX}{title}{Fore.RESET}] {xPoweredBy}"
 
 example_uses = '''example:
    whatweb -t example.com'''
