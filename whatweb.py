@@ -1,3 +1,4 @@
+import re
 import socket
 import urllib
 import argparse
@@ -8,7 +9,7 @@ from colorama import Fore, init
 from requests.exceptions import MissingSchema
 
 package_name = "whatweb"
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 
 init(autoreset=True)
 
@@ -39,6 +40,42 @@ def get_status(status_code:int):
 
 	return statusCode
 
+def get_bootstrap_verion(soup):
+
+	css_link_tags = soup.find_all('link', {'rel': 'stylesheet'})
+	js_script_tags = soup.find_all('script')
+
+	bootstrap_pattern = re.compile(r'bootstrap/\d\.\d\.\d')
+	bootstrap_version = None
+	for tag in css_link_tags + js_script_tags:
+		if 'href' in tag.attrs:
+			match = bootstrap_pattern.search(tag['href'])
+			if match:
+				bootstrap_version = match.group()
+				break
+	if bootstrap_version:
+		return True, bootstrap_version.replace("bootstrap/", "")
+	else:
+		return False, None
+
+def get_jquery_verion(soup):
+
+	css_link_tags = soup.find_all('link', {'rel': 'stylesheet'})
+	js_script_tags = soup.find_all('script')
+
+	jquery_pattern = re.compile(r'jquery/\d\.\d\.\d')
+	jquery_version = None
+	for tag in css_link_tags + js_script_tags:
+		if 'src' in tag.attrs:
+			match = jquery_pattern.search(tag['src'])
+			if match:
+				jquery_version = match.group()
+				break
+	if jquery_version:
+		return True, jquery_version.replace("jquery/", "")
+	else:
+		return False, None
+
 def whatweb(target:str):
 	try:
 		r = get(target)
@@ -50,6 +87,7 @@ def whatweb(target:str):
 	soup = BeautifulSoup(r.text, 'html.parser')
 	title = soup.title.get_text()
 
+	# get all meta generator
 	generator_tags = soup.findAll('meta', attrs={'name': 'generator'})
 	generators = ""
 	for generator in generator_tags:
@@ -58,6 +96,16 @@ def whatweb(target:str):
 		final_generators = f"MetaGenerator[{generators}]"
 	else:
 		final_generators = ""
+
+	# get wordpress version
+	for generator in generator_tags:
+		content = generator['content']
+		if 'WordPress' in content:
+			version = content.replace('WordPress ', '')
+			WordPress = f'WordPres[{Fore.LIGHTBLUE_EX}{version}{Fore.RESET}] '
+			break
+		else:
+			WordPress = ''
 
 	try:
 		Ip = f'IP[{socket.gethostbyname(target)}]'
@@ -85,7 +133,19 @@ def whatweb(target:str):
 	except KeyError:
 		httpServer = ""
 
-	return f"{Fore.LIGHTBLUE_EX}{r.url}{Fore.RESET} [{status_code}] {httpServer} {Ip} {final_generators} Title[{Fore.LIGHTYELLOW_EX}{title}{Fore.RESET}] {xPoweredBy}"
+	is_bootstrap, bootstrap_version = get_bootstrap_verion(soup)
+	if is_bootstrap:
+		Bootstrap = f'Bootstrap[{Fore.LIGHTBLUE_EX}{bootstrap_version}{Fore.RESET}] '
+	else:
+		Bootstrap = ''
+
+	is_jquery, jquery_version = get_jquery_verion(soup)
+	if is_jquery:
+		Jquery = f'Jquery[{Fore.LIGHTBLUE_EX}{jquery_version}{Fore.RESET}] '
+	else:
+		Jquery = ''
+	
+	return f"{Fore.LIGHTBLUE_EX}{r.url}{Fore.RESET} [{status_code}] {httpServer} {Ip} {Bootstrap}{Jquery} {final_generators} Title[{Fore.LIGHTYELLOW_EX}{title}{Fore.RESET}] {WordPress}{xPoweredBy}"
 
 example_uses = '''example:
    whatweb -t example.com'''
