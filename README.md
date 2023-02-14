@@ -19,5 +19,9 @@ pip3 install whatweb
 
 ## Usage 
 ```sh
-whatweb -t {target}             # Enter URL, hostname, IP addresse
+whatweb {target}           # Enter URL, hostname, IP address
 ```
+
+## Demo
+
+![Demo](demo.png "whatweb demo")

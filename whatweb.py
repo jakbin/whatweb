@@ -9,11 +9,11 @@ from colorama import Fore, init
 from requests.exceptions import MissingSchema
 
 package_name = "whatweb"
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 init(autoreset=True)
 
-def get_status(status_code:int):
+def get_status(status_code: int):
 	match status_code:
 		case 200:
 			statusCode = "200 OK"
@@ -76,7 +76,7 @@ def get_jquery_verion(soup):
 	else:
 		return False, None
 
-def whatweb(target:str):
+def whatweb(target: str):
 	try:
 		r = get(target)
 	except MissingSchema:
@@ -93,7 +93,7 @@ def whatweb(target:str):
 	for generator in generator_tags:
 		generators += f"{generator['content']}, "
 	if generators != "": 
-		final_generators = f"MetaGenerator[{generators}]"
+		final_generators = f"MetaGenerator[{generators}] "
 	else:
 		final_generators = ""
 
@@ -106,6 +106,8 @@ def whatweb(target:str):
 			break
 		else:
 			WordPress = ''
+	else:
+		WordPress = ''
 
 	try:
 		Ip = f'IP[{socket.gethostbyname(target)}]'
@@ -129,7 +131,7 @@ def whatweb(target:str):
 		xPoweredBy = ""
 
 	try:
-		httpServer = f'HTTPServer[{Fore.LIGHTRED_EX}{r.headers["Server"]}{Fore.RESET}]'
+		httpServer = f'HTTPServer[{Fore.LIGHTRED_EX}{r.headers["Server"]}{Fore.RESET}] '
 	except KeyError:
 		httpServer = ""
 
@@ -145,27 +147,20 @@ def whatweb(target:str):
 	else:
 		Jquery = ''
 	
-	return f"{Fore.LIGHTBLUE_EX}{r.url}{Fore.RESET} [{status_code}] {httpServer} {Ip} {Bootstrap}{Jquery} {final_generators} Title[{Fore.LIGHTYELLOW_EX}{title}{Fore.RESET}] {WordPress}{xPoweredBy}"
+	return f"{Fore.LIGHTBLUE_EX}{r.url}{Fore.RESET} [{status_code}] {httpServer}{Ip} {Bootstrap}{Jquery}{final_generators}Title[{Fore.LIGHTYELLOW_EX}{title}{Fore.RESET}] {WordPress}{xPoweredBy}"
 
 example_uses = '''example:
-   whatweb -t example.com'''
+   whatweb example.com'''
 
 def main(argv = None):
-	parser = argparse.ArgumentParser(prog=package_name, description="Next generation web scanner", epilog=example_uses, formatter_class=argparse.RawDescriptionHelpFormatter)
+	parser = argparse.ArgumentParser(prog=package_name, description=f"WhatWeb - Next generation web scanner version {__version__}", epilog=example_uses, formatter_class=argparse.RawDescriptionHelpFormatter)
 
-	parser.add_argument("-t","--target", help="Enter URLs, hostnames, IP addresses")
-
-	parser.add_argument("-v","--version",
-							action="store_true",
-							dest="version",
-							help="check version of t-bot")
+	parser.add_argument("target", help="Enter URL, hostname, IP address")
 
 	args = parser.parse_args(argv)
 
 	if args.target:
 		print(whatweb(args.target))
-	elif args.version:
-		return __version__
 	else:
 		parser.print_help()
 
