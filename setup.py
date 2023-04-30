@@ -13,7 +13,7 @@ setuptools.setup(
 	long_description=readme,
 	long_description_content_type="text/markdown",
 	url="https://github.com/jakbin/whatweb",
-	install_requires=["requests","beautifulsoup4"],
+	install_requires=["requests","beautifulsoup4","dnspython","colorama"],
 	python_requires=">=3",
 	project_urls={
 		"Bug Tracker": "https://github.com/jakbin/whatweb/issues",
