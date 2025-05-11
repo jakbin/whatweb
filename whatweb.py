@@ -76,6 +76,34 @@ def get_jquery_verion(soup):
 	else:
 		return False, None
 
+def get_shodan_internetdb_info(ip: str):
+    try:
+        response = get(f"https://internetdb.shodan.io/{ip}").json()
+        
+        # Extract relevant information
+        ports = response.get("ports", [])
+        cpes = response.get("cpes", [])
+        hostnames = response.get("hostnames", [])
+        tags = response.get("tags", [])
+        vulns = response.get("vulns", [])
+        
+        # Format the results
+        shodan_info = ""
+        if ports:
+            shodan_info += f"Ports[{', '.join(map(str, ports))}] "
+        if cpes:
+            shodan_info += f"CPEs[{', '.join(cpes)}] "
+        if hostnames:
+            shodan_info += f"Hostnames[{', '.join(hostnames)}] "
+        if tags:
+            shodan_info += f"Tags[{', '.join(tags)}] "
+        if vulns:
+            shodan_info += f"Vulnerabilities[{', '.join(vulns)}] "
+        
+        return shodan_info
+    except Exception as e:
+        return f"ShodanError[{str(e)}] "
+
 def whatweb(target: str):
 	try:
 		r = get(target)
@@ -88,7 +116,7 @@ def whatweb(target: str):
 	title = soup.title.get_text()
 
 	# get all meta generator
-	generator_tags = soup.findAll('meta', attrs={'name': 'generator'})
+	generator_tags = soup.find_all('meta', attrs={'name': 'generator'})
 	generators = ""
 	for generator in generator_tags:
 		generators += f"{generator['content']}, "
@@ -146,8 +174,32 @@ def whatweb(target: str):
 		Jquery = f'Jquery[{Fore.LIGHTBLUE_EX}{jquery_version}{Fore.RESET}] '
 	else:
 		Jquery = ''
-	
-	return f"{Fore.LIGHTBLUE_EX}{r.url}{Fore.RESET} [{status_code}] {httpServer}{Ip} {Bootstrap}{Jquery}{final_generators}Title[{Fore.LIGHTYELLOW_EX}{title}{Fore.RESET}] {WordPress}{xPoweredBy}"
+		
+	try:
+		ip_address = socket.gethostbyname(target)
+		Ip = f'IP[{Fore.LIGHTRED_EX}{ip_address}{Fore.RESET}] '
+		shodan_info = get_shodan_internetdb_info(ip_address)
+
+		# Add colors to Shodan info
+		if "Ports" in shodan_info:
+			shodan_info = shodan_info.replace("Ports", f"{Fore.LIGHTBLUE_EX}Ports{Fore.RESET}")
+		if "CPEs" in shodan_info:
+			shodan_info = shodan_info.replace("CPEs", f"{Fore.LIGHTGREEN_EX}CPEs{Fore.RESET}")
+		if "Hostnames" in shodan_info:
+			shodan_info = shodan_info.replace("Hostnames", f"{Fore.LIGHTMAGENTA_EX}Hostnames{Fore.RESET}")
+		if "Tags" in shodan_info:
+			shodan_info = shodan_info.replace("Tags", f"{Fore.LIGHTCYAN_EX}Tags{Fore.RESET}")
+		if "Vulnerabilities" in shodan_info:
+			shodan_info = shodan_info.replace("Vulnerabilities", f"{Fore.LIGHTYELLOW_EX}Vulnerabilities{Fore.RESET}")
+
+		# Add prefix and wrap long lines
+		if shodan_info:
+			shodan_info = f"From Shodan Internal DB: {shodan_info}"
+	except socket.gaierror:
+		Ip = ''
+		shodan_info = ''
+
+	return f"{Fore.LIGHTBLUE_EX}{r.url}{Fore.RESET} [{status_code}] {httpServer}{Ip} {Bootstrap}{Jquery}{final_generators}Title[{Fore.LIGHTYELLOW_EX}{title}{Fore.RESET}] {WordPress}{xPoweredBy} \n{shodan_info}"
 
 example_uses = '''example:
    whatweb example.com'''
